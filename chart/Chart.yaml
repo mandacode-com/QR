@@ -1,0 +1,7 @@
+apiVersion: v2
+name: qr
+description: QR Code Service
+
+type: application
+
+version: 0.1.0-dev.2

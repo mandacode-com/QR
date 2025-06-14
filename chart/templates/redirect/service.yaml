@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.redirect.fullname" . }}
+  labels:
+    {{- include "app.redirect.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.redirect.service.type }}
+  ports:
+    - port: {{ .Values.redirect.service.port }}
+      targetPort: {{ .Values.redirect.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "app.redirect.selectorLabels" . | nindent 4 }}

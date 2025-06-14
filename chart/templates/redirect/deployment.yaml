@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+
+kind: Deployment
+metadata:
+  name: {{ include "app.redirect.fullname" . }}
+  labels:
+    {{- include "app.redirect.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.redirect.autoscaling.enabled }}
+  replicas: {{ .Values.redirect.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "app.redirect.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.redirect.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        configmap.checksum: {{ include (print $.Template.BasePath "/redirect/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "app.redirect.labels" . | nindent 8 }}
+        {{- with .Values.redirect.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.redirect.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "app.redirect.serviceAccountName" . }}
+      {{- with .Values.redirect.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.redirect.image.repository }}:{{ .Values.redirect.image.tag }}"
+          imagePullPolicy: {{ .Values.redirect.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.redirect.service.port }}
+              protocol: TCP
+          {{- with .Values.redirect.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.redirect.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.redirect.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.redirect.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "app.redirect.configMapName" . }}
+            - secretRef:
+                name: {{ include "app.redirect.database.secretName" . }}
+      {{- with .Values.redirect.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redirect.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redirect.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redirect.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
